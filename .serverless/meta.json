@@ -1,0 +1,100 @@
+{
+  "C:\\Users\\coelh\\CursorIDEProjects\\WhatsAppBridge": {
+    "versionSfCore": null,
+    "versionFramework": "4.4.18",
+    "isWithinCompose": false,
+    "isCompose": false,
+    "composeOrgName": null,
+    "composeServiceName": null,
+    "servicePath": "C:\\Users\\coelh\\CursorIDEProjects\\WhatsAppBridge",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "whatsapp-bridge",
+      "frameworkVersion": "3",
+      "provider": {
+        "name": "aws",
+        "runtime": "nodejs18.x",
+        "region": "us-east-1",
+        "environment": {
+          "NODE_ENV": "production",
+          "AUTH_KEY_SECRET": "<REDACTED>",
+          "JWT_SECRET": "<REDACTED>",
+          "ALLOWED_ORIGINS": "${env:ALLOWED_ORIGINS}"
+        }
+      },
+      "plugins": [
+        "serverless-offline",
+        "serverless-dotenv-plugin"
+      ],
+      "package": {
+        "patterns": [
+          "!.git/**",
+          "!.gitignore",
+          "!.env*",
+          "!README.md",
+          "!tests/**",
+          "!coverage/**",
+          "!.wwebjs_auth/**",
+          "!.wwebjs_cache/**",
+          "!whatsapp-sessions/**",
+          "!*.test.js"
+        ]
+      },
+      "functions": {
+        "api": {
+          "handler": "src/lambda.handler",
+          "events": [
+            {
+              "httpApi": {
+                "path": "/{proxy+}",
+                "method": "ANY"
+              }
+            }
+          ],
+          "timeout": 30,
+          "memorySize": 1024,
+          "environment": {
+            "CHROME_PATH": "/opt/chromium/chromium"
+          }
+        }
+      }
+    },
+    "serviceRawFile": "service: whatsapp-bridge\r\n\r\nframeworkVersion: '3'\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: nodejs18.x\r\n  region: us-east-1\r\n  environment:\r\n    NODE_ENV: production\r\n    AUTH_KEY_SECRET: ${env:AUTH_KEY_SECRET}\r\n    JWT_SECRET: ${env:JWT_SECRET}\r\n    ALLOWED_ORIGINS: ${env:ALLOWED_ORIGINS}\r\n\r\nplugins:\r\n  - serverless-offline\r\n  - serverless-dotenv-plugin\r\n\r\npackage:\r\n  patterns:\r\n    - '!.git/**'\r\n    - '!.gitignore'\r\n    - '!.env*'\r\n    - '!README.md'\r\n    - '!tests/**'\r\n    - '!coverage/**'\r\n    - '!.wwebjs_auth/**'\r\n    - '!.wwebjs_cache/**'\r\n    - '!whatsapp-sessions/**'\r\n    - '!*.test.js'\r\n\r\nfunctions:\r\n  api:\r\n    handler: src/lambda.handler\r\n    events:\r\n      - httpApi:\r\n          path: /{proxy+}\r\n          method: ANY\r\n    timeout: 30\r\n    memorySize: 1024\r\n    environment:\r\n      CHROME_PATH: /opt/chromium/chromium ",
+    "command": [
+      "create"
+    ],
+    "options": {
+      "template": "aws-nodejs",
+      "path": "."
+    },
+    "error": {
+      "message": "Cannot resolve '${env:AUTH_KEY_SECRET}' variable at 'provider.environment.AUTH_KEY_SECRET'. No value is available for this variable, and no default value was provided. Please check your variable definitions or provide a default value.",
+      "stack": "Error: Cannot resolve '${env:AUTH_KEY_SECRET}' variable at 'provider.environment.AUTH_KEY_SECRET'. No value is available for this variable, and no default value was provided. Please check your variable definitions or provide a default value.\n    at _ResolverManager.resolve (file:///C:/Users/coelh/.serverless/releases/4.4.18/package/dist/sf-core.js:693:57587)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async #handlePlaceholderNode (file:///C:/Users/coelh/.serverless/releases/4.4.18/package/dist/sf-core.js:693:55959)\n    at async file:///C:/Users/coelh/.serverless/releases/4.4.18/package/dist/sf-core.js:693:53887\n    at async processNodeAndHandleCompletion (file:///C:/Users/coelh/.serverless/releases/4.4.18/package/dist/sf-core.js:693:44836)",
+      "code": "MISSING_VARIABLE_RESULT"
+    },
+    "machineId": "651167a64d0b185c53f0b28c696150bc",
+    "stage": "dev",
+    "accessKeyV2": "<REDACTED>",
+    "accessKeyV1": "<REDACTED>",
+    "orgId": "36489906-6bf7-4dab-ab56-8b8a7bc3b861",
+    "orgName": "ninocoelho",
+    "userId": "KJz5Gf7L1LfylX0cNB",
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": false,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "userName": "ninocoelho",
+    "subscription": null,
+    "userEmail": "coelho.idemir@gmail.com",
+    "serviceProviderAwsCfStackId": null,
+    "serviceProviderAwsCfStackCreated": null,
+    "serviceProviderAwsCfStackUpdated": null,
+    "serviceProviderAwsCfStackStatus": null,
+    "serviceProviderAwsCfStackOutputs": null
+  }
+}

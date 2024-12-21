@@ -1,0 +1,44 @@
+# Version control
+.git
+.gitignore
+
+# Dependencies
+node_modules
+npm-debug.log
+
+# Environment variables
+.env
+.env.*
+
+# WhatsApp sessions
+whatsapp-sessions
+.wwebjs_auth
+.wwebjs_cache
+.wwwjs*
+*.data.json
+
+# Development files
+tests
+coverage
+*.test.js
+jest.config.js
+
+# IDE files
+.vscode
+.idea
+
+# Build files
+dist
+build
+
+# Logs
+logs
+*.log
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# AWS files
+serverless.yml
+chromium-layer.yml 
