@@ -1,0 +1,10 @@
+{
+  "name": "whatsapp-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WhatsApp Web API Bridge",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_USERNAME/WhatsAppBridge.git"
+  }
+}

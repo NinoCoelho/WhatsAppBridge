@@ -1,0 +1,720 @@
+openapi: 3.0.0
+info:
+  title: WhatsApp Bridge API
+  description: A RESTful API service that bridges WhatsApp Web with custom applications
+  version: 1.0.0
+  contact:
+    name: API Support
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+    
+    Status:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+          description: Whether the client is authenticated
+        initialized:
+          type: boolean
+          description: Whether the client is initialized
+        qrDisplayed:
+          type: boolean
+          description: Whether a QR code is currently displayed
+        state:
+          type: string
+          description: Current client state
+        timestamp:
+          type: integer
+          description: Timestamp of the status check
+
+    Account:
+      type: object
+      properties:
+        me:
+          type: string
+          description: User's WhatsApp ID
+        pushname:
+          type: string
+          description: User's display name
+        wid:
+          type: string
+          description: User's WhatsApp ID (alternative format)
+        platform:
+          type: string
+          description: Platform information
+    
+    Message:
+      type: object
+      properties:
+        chatId:
+          type: string
+          description: The chat ID to send the message to
+        message:
+          type: string
+          description: The message text
+        mediaUrl:
+          type: string
+          description: Optional URL for media attachment
+    
+    Chat:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Chat ID
+        name:
+          type: string
+          description: Chat name or contact name
+        isGroup:
+          type: boolean
+          description: Whether this is a group chat
+        timestamp:
+          type: integer
+          description: Last message timestamp
+    
+    Subscription:
+      type: object
+      required:
+        - url
+        - events
+        - secret
+      properties:
+        url:
+          type: string
+          description: Webhook URL to receive events
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailableEvents'
+          description: List of events to subscribe to
+        secret:
+          type: string
+          description: Secret key used to authenticate webhook calls
+
+    MessageResponse:
+      type: object
+      properties:
+        messageId:
+          type: string
+          description: ID of the sent message
+        timestamp:
+          type: integer
+          description: Message timestamp
+        status:
+          type: string
+          description: Message status (e.g., 'sent')
+        from:
+          type: string
+          description: Sender's ID
+        to:
+          type: string
+          description: Recipient's ID
+
+    MessageDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Message ID
+        body:
+          type: string
+          description: Message content
+        timestamp:
+          type: integer
+          description: Message timestamp
+        from:
+          type: string
+          description: Sender's ID
+        to:
+          type: string
+          description: Recipient's ID
+        hasMedia:
+          type: boolean
+          description: Whether the message contains media
+        type:
+          type: string
+          description: Message type
+        isForwarded:
+          type: boolean
+          description: Whether the message is forwarded
+        forwardingScore:
+          type: integer
+          description: Forwarding count
+        isStatus:
+          type: boolean
+          description: Whether it's a status message
+        isStarred:
+          type: boolean
+          description: Whether the message is starred
+        broadcast:
+          type: boolean
+          description: Whether it's a broadcast message
+        fromMe:
+          type: boolean
+          description: Whether the message is from the current user
+        hasQuotedMsg:
+          type: boolean
+          description: Whether the message quotes another message
+        mentionedIds:
+          type: array
+          items:
+            type: string
+          description: IDs of mentioned users
+        links:
+          type: array
+          items:
+            type: string
+          description: URLs in the message
+
+    AvailableEvents:
+      type: string
+      enum:
+        - message
+        - message_create
+        - message_ack
+        - group_join
+        - group_leave
+        - group_update
+      description: Available events for subscription
+
+    WebhookEvent:
+      type: object
+      properties:
+        event:
+          type: string
+          enum:
+            - message
+            - message_create
+            - message_ack
+            - group_join
+            - group_leave
+            - group_update
+          description: Type of event
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/MessageEvent'
+            - $ref: '#/components/schemas/MessageAckEvent'
+            - $ref: '#/components/schemas/GroupEvent'
+
+    MessageEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        body:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        timestamp:
+          type: integer
+        type:
+          type: string
+        hasMedia:
+          type: boolean
+
+    MessageAckEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        ack:
+          type: integer
+        timestamp:
+          type: integer
+
+    GroupEvent:
+      type: object
+      properties:
+        groupId:
+          type: string
+        action:
+          type: string
+        author:
+          type: string
+        timestamp:
+          type: integer
+
+security:
+  - BearerAuth: []
+
+paths:
+  /init/{key}:
+    get:
+      summary: Initialize WhatsApp client
+      description: Initialize the WhatsApp client and get QR code for authentication
+      security: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Authentication key
+      responses:
+        '200':
+          description: QR code HTML page or authentication success response
+        '401':
+          description: Invalid authentication key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Initialization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/status:
+    get:
+      summary: Get client status
+      description: Get the current status of the WhatsApp client
+      responses:
+        '200':
+          description: Current client status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/account:
+    get:
+      summary: Get connected account information
+      description: Get information about the currently connected WhatsApp account
+      responses:
+        '200':
+          description: Connected account information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Client not fully initialized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /messages/send:
+    post:
+      summary: Send message
+      description: Send a message to a WhatsApp chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Message'
+      responses:
+        '200':
+          description: Message sent successfully
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /chats:
+    get:
+      summary: List chats
+      description: Get a list of all WhatsApp chats
+      responses:
+        '200':
+          description: List of chats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Chat'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /subscriptions:
+    post:
+      tags:
+        - Webhooks
+      summary: Create webhook subscription
+      description: Subscribe to WhatsApp events with a webhook URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+      responses:
+        201:
+          description: Subscription created successfully
+        400:
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - Webhooks
+      summary: List all subscriptions
+      description: Get a list of all active webhook subscriptions
+      responses:
+        200:
+          description: List of active subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                    events:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AvailableEvents'
+    delete:
+      tags:
+        - Webhooks
+      summary: Delete a subscription
+      description: Remove a webhook subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  description: URL of the subscription to delete
+      responses:
+        200:
+          description: Subscription removed successfully
+        404:
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /messages/reply:
+    post:
+      tags:
+        - Messages
+      summary: Reply to a message
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - messageId
+                - body
+              properties:
+                messageId:
+                  type: string
+                  description: ID of the message to reply to
+                body:
+                  type: string
+                  description: Content of the reply message
+      responses:
+        200:
+          description: Reply sent successfully
+        400:
+          description: Missing required fields
+        404:
+          description: Message not found
+        500:
+          description: Server error
+
+  /messages/quote:
+    post:
+      tags:
+        - Messages
+      summary: Reply to a message with quote
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - messageId
+                - body
+              properties:
+                messageId:
+                  type: string
+                  description: ID of the message to quote and reply to
+                body:
+                  type: string
+                  description: Content of the reply message
+      responses:
+        200:
+          description: Quote reply sent successfully
+        400:
+          description: Missing required fields
+        404:
+          description: Message not found
+        500:
+          description: Server error
+
+  /messages:
+    get:
+      tags:
+        - Messages
+      summary: Get messages from a chat
+      parameters:
+        - name: chatId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the chat to get messages from
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+          description: Maximum number of messages to retrieve
+      responses:
+        200:
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MessageDetails'
+        400:
+          description: Missing chat ID
+        500:
+          description: Server error
+
+  /messages/{messageId}/reply:
+    post:
+      tags:
+        - Messages
+      summary: Reply to a specific message
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the message to reply to
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  description: Reply message content
+                mediaUrl:
+                  type: string
+                  description: Optional URL for media attachment
+      responses:
+        200:
+          description: Reply sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        400:
+          description: Missing required fields
+        404:
+          description: Message not found
+        500:
+          description: Server error
+
+  /messages/{messageId}/star:
+    post:
+      tags:
+        - Messages
+      summary: Star or unstar a message
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                star:
+                  type: boolean
+                  default: true
+                  description: Whether to star or unstar the message
+      responses:
+        200:
+          description: Message starred/unstarred successfully
+        404:
+          description: Message not found
+        500:
+          description: Server error
+
+  /messages/{messageId}/react:
+    post:
+      tags:
+        - Messages
+      summary: React to a message
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reaction
+              properties:
+                reaction:
+                  type: string
+                  description: Emoji reaction
+      responses:
+        200:
+          description: Reaction added successfully
+        400:
+          description: Missing reaction emoji
+        404:
+          description: Message not found
+        500:
+          description: Server error
+
+  /messages/{messageId}:
+    delete:
+      tags:
+        - Messages
+      summary: Delete a message
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the message to delete
+        - name: everyone
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Whether to delete for everyone or just for me
+      responses:
+        200:
+          description: Message deleted successfully
+        404:
+          description: Message not found
+        500:
+          description: Server error
+
+  /messages/{messageId}/media:
+    get:
+      tags:
+        - Messages
+      summary: Download message media attachment
+      description: Download media (image, video, audio, document) from a message
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the message containing media
+      responses:
+        200:
+          description: Media file
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        400:
+          description: Message has no media attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Message or media not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
