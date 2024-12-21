@@ -4,29 +4,28 @@ Private WhatsApp Web API Bridge for automated messaging and interactions.
 
 ## Features
 
-- WhatsApp Web client integration
-- QR code-based authentication
-- Session persistence
+- WhatsApp Web client integration with session persistence
 - RESTful API endpoints for:
-  - Sending messages
-  - Managing chats
-  - Handling subscriptions
-  - Authentication status
-- Swagger API documentation
+  - Message handling (send, reply, react, delete)
+  - Chat management
+  - Webhook subscriptions
+  - Media handling
 - Secure authentication with API keys
+- Rate limiting and CORS protection
+- Swagger API documentation
 
 ## Prerequisites
 
 - Node.js (v14 or higher)
 - npm (v6 or higher)
 - Chrome/Chromium browser
-- A WhatsApp account
+- WhatsApp account
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone [repository-url]
+git clone [your-repository-url]
 cd whatsapp-bridge
 ```
 
@@ -35,88 +34,84 @@ cd whatsapp-bridge
 npm install
 ```
 
-3. Create a `.env` file in the root directory:
+3. Create a `.env` file based on `.env.example`:
 ```env
 PORT=3000
 HOST=localhost
+AUTH_KEY_SECRET=your_secret_key
+JWT_SECRET=your_jwt_secret
+ALLOWED_ORIGINS=http://localhost:3000
 LOG_LEVEL=info
-WHATSAPP_CLIENT_ID=whatsapp-bridge
-WHATSAPP_SESSION_PATH=./whatsapp-sessions
 ```
 
 ## Usage
 
 1. Start the server:
 ```bash
+# Development
+npm run dev
+
+# Production
 npm start
 ```
 
-2. The server will generate an authentication key and display it in the console. Save this key for API access.
-
-3. Visit the initialization URL shown in the console to scan the WhatsApp QR code:
-```
-http://localhost:3000/init/[your-auth-key]
-```
-
-4. Once authenticated, you can start using the API endpoints.
+2. Initialize WhatsApp client:
+- Visit `http://localhost:3000/init/[your-auth-key]`
+- Scan the QR code with WhatsApp
+- The server will maintain the session for future use
 
 ## API Documentation
 
-The API documentation is available at `/api-docs` when the server is running. Visit:
+Access the Swagger documentation at:
 ```
 http://localhost:3000/api-docs
 ```
 
-### Key Endpoints
+### Core Endpoints
 
-- `GET /init/:key` - Initialize WhatsApp client and get QR code
-- `GET /auth/status` - Check authentication status
-- `POST /messages/send` - Send a message
+#### Authentication
+- `GET /auth/status` - Check connection status
+- `POST /auth/initialize` - Initialize new session
+
+#### Messages
+- `POST /messages` - Send message
+- `GET /messages` - Get chat messages
+- `POST /messages/:messageId/reply` - Reply to message
+- `POST /messages/:messageId/react` - React to message
+- `DELETE /messages/:messageId` - Delete message
+- `GET /messages/:messageId/media` - Download media
+
+#### Chats
 - `GET /chats` - List all chats
+- `GET /chats/:chatId` - Get chat details
+- `GET /chats/:chatId/messages` - Get chat messages
+
+#### Webhooks
 - `POST /subscriptions` - Create webhook subscription
+- `GET /subscriptions` - List subscriptions
+- `DELETE /subscriptions/:id` - Remove subscription
 
-## Authentication
+## Security
 
-All API endpoints (except initialization) require authentication using a Bearer token:
-
-```http
-Authorization: Bearer [your-auth-key]
-```
-
-## Error Handling
-
-The API uses standard HTTP status codes:
-- 200: Success
-- 400: Bad Request
-- 401: Unauthorized
-- 404: Not Found
-- 500: Internal Server Error
-
-Errors are returned in JSON format:
-```json
-{
-    "error": "Error message"
-}
-```
+- All endpoints require authentication via Bearer token
+- Rate limiting: 100 requests per 15 minutes
+- CORS protection with configurable origins
+- Session data stored securely
+- No sensitive data exposed in responses
 
 ## Development
 
-For development with auto-reload:
 ```bash
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run in development mode
 npm run dev
 ```
 
-## Security Considerations
-
-- Keep your authentication key secure
-- Use HTTPS in production
-- Don't share your WhatsApp session data
-- Monitor webhook endpoints for security
-
 ## License
 
-[Your License]
-
-## Contributing
-
-[Your Contributing Guidelines] 
+Private and Confidential. All rights reserved. 
